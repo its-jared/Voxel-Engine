@@ -14,11 +14,8 @@ namespace Voxel_Engine
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
-        private Texture2D contentTest;
-        private Vector2 contentPosition;
-        private float contentMoveSpeed;
-
         private MeshRenderer mr;
+        private Matrix worldMatrix, viewMatrix, projectionMatrix;
 
         public Game1()
         {
@@ -29,10 +26,12 @@ namespace Voxel_Engine
 
         protected override void Initialize()
         {
-            contentPosition = new Vector2(
-                _graphics.PreferredBackBufferWidth / 2f,
-                _graphics.PreferredBackBufferHeight / 2f);
-            contentMoveSpeed = 100f;
+            worldMatrix = Matrix.Identity;
+            viewMatrix = Matrix.CreateLookAt(new Vector3(0, 0, 50), Vector3.Zero, Vector3.Up);
+            projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
+                MathHelper.PiOver4,
+                GraphicsDevice.Viewport.AspectRatio,
+                1.0f, 300.0f);
 
             base.Initialize();
         }
@@ -41,9 +40,8 @@ namespace Voxel_Engine
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            contentTest = Content.Load<Texture2D>("images/contentTester");
-
             camera = new Camera(GraphicsDevice, Window);
+            camera.World = Matrix.Identity;
             camera.Position = new Vector3(0, 0, 0);
             camera.LookAtDirection = Vector3.Forward;
 
@@ -56,34 +54,9 @@ namespace Voxel_Engine
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            float updatedContentMoveSpeed = contentMoveSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            KeyboardState kstate = Keyboard.GetState();
-
-            /*if (kstate.IsKeyDown(Keys.Up)) camera.MoveForward(gameTime);
-            if (kstate.IsKeyDown(Keys.Down)) camera.MoveBackward(gameTime);
-            if (kstate.IsKeyDown(Keys.Left)) camera.MoveLeft(gameTime);
-            if (kstate.IsKeyDown(Keys.Right)) camera.MoveRight(gameTime);*/
-
-            HandleScreenEdges();
-
             camera.Update(gameTime);
 
             base.Update(gameTime);
-        }
-
-        private void HandleScreenEdges()
-        {
-            /* Sides of the screen. */
-            if (contentPosition.X > _graphics.PreferredBackBufferWidth - contentTest.Width / 2)
-                contentPosition.X = _graphics.PreferredBackBufferWidth - contentTest.Width / 2;
-            else if (contentPosition.X < contentTest.Width / 2)
-                contentPosition.X = contentTest.Width / 2;
-
-            /* Top and bottom of the screen. */
-            if (contentPosition.Y > _graphics.PreferredBackBufferHeight - contentTest.Height / 2)
-                contentPosition.Y = _graphics.PreferredBackBufferHeight - contentTest.Height / 2;
-            else if (contentPosition.Y < contentTest.Height / 2)
-                contentPosition.Y = contentTest.Height / 2;
         }
 
         protected override void Draw(GameTime gameTime)
@@ -91,7 +64,7 @@ namespace Voxel_Engine
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             _spriteBatch.Begin(transformMatrix: camera.View);
-            
+            mr.DrawCube(Color.Red, worldMatrix, viewMatrix, projectionMatrix);;
             _spriteBatch.End();
 
             base.Draw(gameTime);
